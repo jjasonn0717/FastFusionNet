@@ -16,7 +16,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 from torch.autograd.function import InplaceFunction
-from sru import SRUCell
+from oldsru import SRUCell
 try:
     from oldsru import SRUCell as OldSRUCell
 except:
@@ -223,7 +223,8 @@ class StackedBRNN(nn.Module):
         """Faster encoding that ignores any padding."""
         # Transpose batch and sequence dims
         x = x.transpose(0, 1)
-        lengths_var = Variable(x_mask.data.eq(0).long().sum(1).squeeze().float().unsqueeze(1), requires_grad=False)
+        #lengths_var = Variable(x_mask.data.eq(0).long().sum(1).squeeze().float().unsqueeze(1), requires_grad=False)
+        lengths_var = Variable(x_mask.data.eq(0).long().sum(1).float().unsqueeze(1), requires_grad=False)
 
         # Encode all layers
         outputs = [x]

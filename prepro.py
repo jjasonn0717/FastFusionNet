@@ -302,12 +302,14 @@ context_features = [[list(w) + [tf] for w, tf in zip(doc, tfs)] for doc, tfs in
                     zip(context_features, context_tf)]
 
 # tags
-vocab_tag = list(nlp.tagger.tag_names)
+#vocab_tag = list(nlp.tagger.tag_names)
+vocab_tag = list(nlp.tagger.labels)
 context_tag_ids = token2id(context_tags, vocab_tag)
 log.info('Found {} POS tags.'.format(len(vocab_tag)))
 
 # entities, build dict on the fly
-vocab_ent = [''] + nlp.entity.cfg[u'actions']['1']
+#vocab_ent = [''] + nlp.entity.cfg[u'actions']['1']
+vocab_ent = [''] + list(nlp.entity.labels)
 context_ent_ids = token2id(context_ents, vocab_ent)
 log.info('Found {} entity tags: {}'.format(len(vocab_ent), vocab_ent))
 
