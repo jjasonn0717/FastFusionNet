@@ -79,7 +79,7 @@ def main():
     eval_time = time.perf_counter() - start
     dev_y = [r['answer_texts'] for r in results]
     em, f1, topk_em, topk_f1, topk_recall = score_ans_extraction(results, dev_y)
-    log.info("[dev EM: {} F1: {} TopK_EM: {} TopK_F1: {} TopK_Recall: {} eval_time: {:.2f} s eval_time per example: {:.3f} ms]".format(em, f1, topk_em, topk_f1, topk_recall, eval_time, eval_time * 1000. / len(dev)))
+    log.info("[dev EM: {} F1: {} TopK_EM: {} TopK_F1: {} TopK_Recall: {} eval_time: {:.2f} s eval_time per example: {:.3f} ms]".format(em, f1, topk_em, topk_f1, topk_recall, eval_time, eval_time * 1000. / len(dev_data)))
 
 
 if __name__ == '__main__':
