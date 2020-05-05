@@ -26,6 +26,8 @@ parser.add_argument('--input_path', required=True,
                     help='input dev path')
 parser.add_argument('--save_dir', default='save/debug',
                     help='path to store saved models.')
+parser.add_argument('--data_path', default='data/squad/data{}.pth',
+                    help='path to store saved prepro.')
 parser.add_argument('--seed', type=int, default=123,
                     help='random seed for data shuffling, dropout, etc.')
 parser.add_argument("--cuda", type=str2bool, nargs='?',
@@ -65,7 +67,7 @@ log.addHandler(ch)
 
 def main():
     log.info('[program starts.]')
-    predictor =  FusionNetPredictor(os.path.join(args.save_dir, args.resume), ans_top_k=args.ans_top_k, cuda=args.cuda)
+    predictor =  FusionNetPredictor(os.path.join(args.save_dir, args.resume), data_path=args.data_path, ans_top_k=args.ans_top_k, cuda=args.cuda)
     log.info('model:\n{}'.format(predictor._model.network))
 
     with open(args.input_path, 'rb') as f:
@@ -80,6 +82,8 @@ def main():
     dev_y = [r['answer_texts'] for r in results]
     em, f1, topk_em, topk_f1, topk_recall = score_ans_extraction(results, dev_y)
     log.info("[dev EM: {} F1: {} TopK_EM: {} TopK_F1: {} TopK_Recall: {} eval_time: {:.2f} s eval_time per example: {:.3f} ms]".format(em, f1, topk_em, topk_f1, topk_recall, eval_time, eval_time * 1000. / len(dev_data)))
+    all_time_doc_preprocess = sum([r['time_doc_preprocess'] for r in results])
+    log.info("[time without doc preprocess: {:.3f} ms]".format((eval_time - all_time_doc_preprocess) * 1000. / len(dev_data)))
 
 
 if __name__ == '__main__':

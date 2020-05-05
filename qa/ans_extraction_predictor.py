@@ -87,7 +87,7 @@ def get_span_logit(span, start_logits, end_logits):
 
 
 class FusionNetPredictor:
-    def __init__(self, model_path, ans_top_k=None, cuda=True):
+    def __init__(self, model_path, data_path, ans_top_k=None, cuda=True):
         print('[loading previous model...]')
         checkpoint = torch.load(model_path)
         # reset ans_top_k
@@ -102,7 +102,7 @@ class FusionNetPredictor:
         checkpoint['config'].update(args)
         opt = checkpoint['config']
         print("ans_top_k:", opt['ans_top_k'])
-        _, _, _, _, embedding, opt, meta = load_data(opt, log=None)
+        _, _, _, _, embedding, opt, meta = load_data(opt, log=None, data_path=data_path)
 
         self._eval_vocab = {'vocab': meta['vocab'], 'w2id': {w: i for i, w in enumerate(meta['vocab'])}}
         self._vocab_tag = {'vocab': meta['vocab_tag'], 'w2id': {w: i for i, w in enumerate(meta['vocab_tag'])}}
@@ -131,6 +131,7 @@ class FusionNetPredictor:
         question_token_span = get_spans([w.text for w in question_doc], question)
         question_ids = token2id(question_tokens, self._eval_vocab, unk_id=1)
 
+        start = time.time()
         context = ""
         context_tokens = []
         sents_docs = []
@@ -145,9 +146,11 @@ class FusionNetPredictor:
                 if len(sent_tokens) == 0:
                     continue
                 sents_docs.append(sent_doc)
-                token_spans_sent.append((len(context_tokens), len(context_tokens)+len(sent_tokens)-1))
+                token_spans_sent.append([len(context_tokens), len(context_tokens)+len(sent_tokens)-1])
                 context += sent
                 context_tokens.extend(sent_tokens)
+        time_doc_preprocess = time.time() - start
+        #print("doc preprocess:", time_doc_preprocess)
 
         context_token_span = get_spans([w.text for doc in sents_docs for w in doc], context)
         context_sentence_lens = [[] for doc in sents_docs]
@@ -194,7 +197,8 @@ class FusionNetPredictor:
                     'passage_tokens': context_tokens,
                     'question_tokens': question_tokens,
                     'answers': answers,
-                    '_id': article_id}
+                    '_id': article_id,
+                    'time_doc_preprocess': time_doc_preprocess}
         return instance, metadata
 
     def _batchify(self, batch):
@@ -305,7 +309,8 @@ class FusionNetPredictor:
                 'token_spans_sent': metadata['token_spans_sent'],
                 "start_logits": start_logits,
                 "end_logits": end_logits,
-                '_id': metadata['_id']}
+                '_id': metadata['_id'],
+                'time_doc_preprocess': metadata['time_doc_preprocess']}
 
     def predict_json(self, article):
         instance, metadata = self._json_to_instance(article)
