@@ -87,7 +87,7 @@ def get_span_logit(span, start_logits, end_logits):
 
 
 class FusionNetPredictor:
-    def __init__(self, model_path, data_path, ans_top_k=None, cuda=True):
+    def __init__(self, model_path, data_path, ans_top_k=None, para_limit=2250, cuda=True):
         print('[loading previous model...]')
         checkpoint = torch.load(model_path)
         # reset ans_top_k
@@ -120,6 +120,8 @@ class FusionNetPredictor:
         self._opt = {'tf': True, 'use_feat_emb': True, 'pos_size': 12, 'ner_size': 8, 'use_elmo': False}
         self._opt.update(opt)
 
+        self._para_limit = para_limit
+
     def _json_to_instance(self, article):
         article_id = article['_id']
         answers = article['answers']
@@ -145,10 +147,20 @@ class FusionNetPredictor:
                 sent_tokens = [normalize_text(w.text) for w in sent_doc]
                 if len(sent_tokens) == 0:
                     continue
-                sents_docs.append(sent_doc)
-                token_spans_sent.append([len(context_tokens), len(context_tokens)+len(sent_tokens)-1])
-                context += sent
-                context_tokens.extend(sent_tokens)
+                if len(context_tokens)+len(sent_tokens) <= self._para_limit:
+                    sents_docs.append(sent_doc)
+                    token_spans_sent.append([len(context_tokens), len(context_tokens)+len(sent_tokens)-1])
+                    context += sent
+                    context_tokens.extend(sent_tokens)
+                else:
+                    if len(context_tokens) < self._para_limit:
+                        sent_text = "".join([w.text_with_ws for w_idx, w in enumerate(sent_doc) if w_idx < self._para_limit-len(context_tokens)])
+                        sent_doc = self._nlp(sent_text)
+                        sent_tokens = [normalize_text(w.text) for w in sent_doc]
+                        sents_docs.append(sent_doc)
+                        token_spans_sent.append([len(context_tokens), len(context_tokens)+len(sent_tokens)-1])
+                        context += sent
+                        context_tokens.extend(sent_tokens)
         time_doc_preprocess = time.time() - start
         #print("doc preprocess:", time_doc_preprocess)
 
