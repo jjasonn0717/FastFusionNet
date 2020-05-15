@@ -89,7 +89,10 @@ def get_span_logit(span, start_logits, end_logits):
 class FusionNetPredictor:
     def __init__(self, model_path, data_path, ans_top_k=None, cuda=True):
         print('[loading previous model...]')
-        checkpoint = torch.load(model_path)
+        if cuda:
+            checkpoint = torch.load(model_path)
+        else:
+            checkpoint = torch.load(model_path, map_location='cpu')
         # reset ans_top_k
         if ans_top_k is None:
             ans_top_k = checkpoint['config']['ans_top_k'] if 'ans_top_k' in checkpoint['config'] else 20
@@ -120,16 +123,34 @@ class FusionNetPredictor:
         self._opt = {'tf': True, 'use_feat_emb': True, 'pos_size': 12, 'ner_size': 8, 'use_elmo': False}
         self._opt.update(opt)
 
+    def reset_ques_vectors_cache(self):
+        self._question = None
+        self._question = None
+        self._question_text = None
+        self._question_doc = None
+        self._question_tokens = None
+        self._question_token_span = None
+        self._question_ids = None
+
     def _json_to_instance(self, article):
         article_id = article['_id']
         answers = article['answers']
 
-        question = article['question'].strip().replace("\n", "")
-        question_text = pre_proc(question)
-        question_doc = self._nlp(question_text)
-        question_tokens = [normalize_text(w.text) for w in question_doc]
-        question_token_span = get_spans([w.text for w in question_doc], question)
-        question_ids = token2id(question_tokens, self._eval_vocab, unk_id=1)
+        if self._question is None:
+            self._question = article['question'].strip().replace("\n", "")
+            self._question_text = pre_proc(self._question)
+            self._question_doc = self._nlp(self._question_text)
+            self._question_tokens = [normalize_text(w.text) for w in self._question_doc]
+            self._question_token_span = get_spans([w.text for w in self._question_doc], self._question)
+            self._question_ids = token2id(self._question_tokens, self._eval_vocab, unk_id=1)
+        question =            self._question
+        question =            self._question
+        question_text =       self._question_text
+        question_doc =        self._question_doc
+        question_tokens =     self._question_tokens
+        question_token_span = self._question_token_span
+        question_ids =        self._question_ids
+
 
         start = time.time()
         context = ""
