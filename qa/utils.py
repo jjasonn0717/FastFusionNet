@@ -93,8 +93,8 @@ def load_data(opt, log=None, data_path=None):
     if data_path is None:
         if opt['debug']:
             data_path = 'data/squad/sample-100{}.pth'
-        else:
-            data_path = 'data/squad/data{}.pth'
+        #else:
+        #    data_path = 'data/squad/data{}.pth'
     data_path = data_path.format('' if opt['data_suffix'] == '' else '-' + opt['data_suffix'])
     if log:
         log.info('loading data from {}'.format(data_path))

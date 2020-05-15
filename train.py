@@ -24,6 +24,8 @@ parser.add_argument('--log_file', default='output.log',
                     help='path for log file.')
 parser.add_argument('--log_per_updates', type=int, default=50,
                     help='log model loss per x updates (mini-batches).')
+parser.add_argument('--data_path', default='data/squad/data{}.pth',
+                    help='path to store saved prepro.')
 parser.add_argument('--data_suffix', default='fusion',
                     help='suffix of the preprocessed data file.')
 parser.add_argument('--save_dir', default='save/debug',
@@ -169,7 +171,7 @@ writer = SummaryWriter(save_dir)
 
 def main():
     log.info('[program starts.]')
-    train, dev, train_y, dev_y, embedding, opt, meta = load_data(vars(args), log)
+    train, dev, train_y, dev_y, embedding, opt, meta = load_data(vars(args), log, data_path=args.data_path)
     # hold out original dev set
     log.info('[Data loaded.]')
     log.info('train_size: {}, dev_size: {}'.format(len(train), len(dev)))
