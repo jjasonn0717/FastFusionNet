@@ -87,7 +87,7 @@ def get_span_logit(span, start_logits, end_logits):
 
 
 class FusionNetPredictor:
-    def __init__(self, model_path, data_path, ans_top_k=None, para_limit=2250, cuda=True):
+    def __init__(self, model_path, data_path, ans_top_k=None, para_limit=2250, cuda=True, cache_question=False):
         print('[loading previous model...]')
         if cuda:
             checkpoint = torch.load(model_path)
@@ -125,6 +125,8 @@ class FusionNetPredictor:
 
         self._para_limit = para_limit
 
+        self._cache_question = cache_question
+
     def reset_ques_vectors_cache(self):
         self._question = None
         self._question = None
@@ -138,7 +140,7 @@ class FusionNetPredictor:
         article_id = article['_id']
         answers = article['answers']
 
-        if self._question is None:
+        if not self._cache_question or self._question is None:
             self._question = article['question'].strip().replace("\n", "")
             self._question_text = pre_proc(self._question)
             self._question_doc = self._nlp(self._question_text)
